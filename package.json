@@ -1,0 +1,51 @@
+{
+  "name": "ln-admin-fe",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Niuniu API admin (Materio/MUI shell) — based on rc-niuniu-api-fe-next + ln_admin_fe_ref",
+  "scripts": {
+    "dev": "next dev",
+    "build": "npm run icons && next build",
+    "build:noicons": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "icons": "tsx src/assets/iconify-icons/bundle-icons-css.ts"
+  },
+  "dependencies": {
+    "@emotion/cache": "^11.11.0",
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@mui/lab": "5.0.0-alpha.170",
+    "@mui/material": "^5.15.19",
+    "@mui/material-nextjs": "^5.15.11",
+    "bootstrap": "^5.3.3",
+    "classnames": "^2.5.1",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.468.0",
+    "next": "14.2.18",
+    "react": "^18.3.1",
+    "react-datepicker": "^9.1.0",
+    "react-dom": "^18.3.1",
+    "react-perfect-scrollbar": "^1.5.8",
+    "react-use": "^17.5.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@iconify/json": "^2.2.218",
+    "@iconify/tools": "^4.0.4",
+    "@iconify/types": "^2.0.0",
+    "@iconify/utils": "^2.1.24",
+    "@types/node": "^20.14.2",
+    "@types/react": "^18.3.3",
+    "@types/react-datepicker": "^7.0.0",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.18",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.4",
+    "tailwindcss-logical": "^3.0.1",
+    "tsx": "^4.15.2",
+    "typescript": "^5.4.5"
+  }
+}
