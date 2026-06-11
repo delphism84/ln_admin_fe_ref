@@ -1,5 +1,5 @@
-import AdminConsole from '@/components/admin/AdminConsole'
+import { redirect } from 'next/navigation'
 
 export default function Home() {
-  return <AdminConsole />
+  redirect('/login')
 }

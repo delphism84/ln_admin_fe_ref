@@ -1,13 +1,14 @@
 /** @type {import('next').NextConfig} */
+const apiProxy = (process.env.API_PROXY_TARGET || '').trim()
+
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   output: 'standalone',
-  typescript: {
-    ignoreBuildErrors: true
-  },
-  eslint: {
-    ignoreDuringBuilds: true
+  async rewrites() {
+    if (!apiProxy) return []
+    const base = apiProxy.replace(/\/$/, '')
+    return [{ source: '/api/:path*', destination: `${base}/api/:path*` }]
   }
 }
 
