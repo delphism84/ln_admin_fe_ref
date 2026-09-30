@@ -1,23 +1,26 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import 'bootstrap/dist/css/bootstrap.min.css'
-import './globals.css'
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap'
-})
+import type { Metadata } from 'next';
+import './globals.css';
+import DialogHost from '@/components/ui/DialogHost';
 
 export const metadata: Metadata = {
-  title: 'EMPECS CGMS Admin',
-  description: '혈당 측정 기기·회원·데이터 관리'
-}
+  title: 'EMPECS CGMS 관리자',
+  description: 'EMPECS CGMS 관리자 콘솔',
+  robots: { index: false, follow: false },
+};
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+// 첫 화면이 그려지기 전에 테마를 적용해 깜빡임을 막는다.
+const themeScript = `(function(){try{var t=localStorage.getItem('empecs_admin_theme');if(t!=='dark'&&t!=='light'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`;
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang='ko' className={inter.variable}>
-      <body className={`${inter.className} min-h-screen bg-[#f4f6fb] text-slate-900 antialiased`}>{children}</body>
+    <html lang="ko" data-theme="light" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body>
+        {children}
+        <DialogHost />
+      </body>
     </html>
-  )
+  );
 }

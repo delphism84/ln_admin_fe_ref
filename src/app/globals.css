@@ -2,135 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Bootstrap 5 — 화이트 / 라이트 관리자 테마 (최근 SaaS admin 톤) */
-:root {
-  --bs-body-font-size: 10pt;
-  --bs-body-bg: #f8fafd;
-  --bs-body-color: #0f172a;
-  --bs-primary: #1e293b;
-  --bs-secondary: #64748b;
-  --bs-success: #059669;
-  --bs-danger: #dc2626;
-  --bs-warning: #d97706;
-  --bs-info: #0284c7;
-  --bs-primary-rgb: 30, 41, 59;
-  --bs-link-color: #2563eb;
-  --bs-link-hover-color: #1d4ed8;
-  --bs-border-color: #e8edf4;
-  --bs-border-radius: 0.75rem;
-  --bs-border-radius-sm: 0.5rem;
-  --bs-card-border-radius: 0.75rem;
-  --bs-card-border-color: #e8edf4;
-  --bs-card-border-width: 1px;
-  --bs-card-bg: #ffffff;
-  --bs-card-cap-bg: #fdfdff;
-  --bs-box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
-  --bs-box-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --bs-tertiary-bg: #f7f9fc;
-  --bs-table-bg: #ffffff;
-  --bs-table-striped-bg: #feffff;
-  --bs-table-hover-bg: #fbfcfe;
-  --bs-form-control-bg: #ffffff;
-  --bs-input-border-color: #e2e8f0;
-  --bs-nav-tabs-link-active-bg: #ffffff;
-  --bs-nav-tabs-link-active-border-color: #e8edf4 #e8edf4 #ffffff;
+html, body { height: 100%; }
+body { @apply bg-base-200 text-base-content antialiased; font-size: 13.5px; }
+
+@layer components {
+  /* 카드·패널 */
+  .adm-card { @apply bg-base-100 border border-base-300 rounded-xl shadow-sm; }
+
+  /* 입력 */
+  .adm-input { @apply h-9 px-3 rounded-lg border border-base-300 bg-base-100 text-[13px] outline-none transition-colors w-full; }
+  .adm-input:focus { @apply border-primary ring-2 ring-primary/20; }
+  .adm-input:disabled { @apply bg-base-200 text-base-content/50; }
+  textarea.adm-input { @apply h-auto py-2 leading-relaxed; }
+  .adm-label { @apply block text-[12px] font-semibold text-base-content/70 mb-1; }
+
+  /* 버튼 */
+  .adm-btn { @apply inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-lg border border-base-300 bg-base-100 text-[13px] font-semibold text-base-content/85 transition-colors whitespace-nowrap select-none; }
+  .adm-btn:hover { @apply bg-base-200; }
+  .adm-btn:disabled { @apply opacity-50 cursor-not-allowed; }
+  .adm-btn-primary { @apply bg-primary border-primary text-primary-content; }
+  .adm-btn-primary:hover { @apply bg-primary/90; }
+  .adm-btn-danger { @apply bg-error border-error text-white; }
+  .adm-btn-danger:hover { @apply bg-error/90; }
+  .adm-btn-ghost { @apply border-transparent bg-transparent; }
+  .adm-btn-sm { @apply h-7 px-2.5 text-[12px] rounded-md; }
+
+  /* 표: 조밀한 행, 고정 헤더, 줄무늬 없이 hover 만 */
+  .adm-table-wrap { @apply w-full overflow-x-auto; }
+  .adm-table { @apply w-full text-[12.5px] border-collapse; }
+  .adm-table thead th { @apply sticky top-0 z-[1] bg-base-200 text-left font-semibold text-base-content/70 px-3 py-2 border-b border-base-300 whitespace-nowrap; }
+  .adm-table tbody td { @apply px-3 py-2 border-b border-base-300/70 whitespace-nowrap align-middle; }
+  .adm-table tbody tr:hover td { @apply bg-primary/5; }
+  .adm-table tbody tr.is-selected td { @apply bg-primary/10; }
+  .adm-table tbody tr.is-clickable { @apply cursor-pointer; }
+  .adm-table th.num, .adm-table td.num { @apply text-right tabular-nums; }
+  .adm-table th.sortable { @apply cursor-pointer select-none; }
+  .adm-table th.sortable:hover { @apply text-base-content; }
+
+  /* 상세 화면의 "항목: 값" 목록 */
+  .adm-dl { @apply grid grid-cols-[110px_1fr] gap-x-3 gap-y-2 text-[13px]; }
+  .adm-dl dt { @apply text-base-content/60; }
+  .adm-dl dd { @apply min-w-0 break-words; }
+
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
 }
 
-html {
-  font-size: 10pt;
+/* QR 라벨 인쇄: 화면 요소는 숨기고 라벨 영역만 출력 */
+@media print {
+  body { background: #fff !important; }
+  .no-print { display: none !important; }
+  .print-area { display: block !important; }
+  .adm-card { box-shadow: none !important; }
 }
-
-body {
-  font-size: 10pt;
-  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* 모든 테이블/그리드 텍스트를 10pt 기준으로 통일 */
-.table,
-.table th,
-.table td,
-[role='grid'],
-[role='treegrid'] {
-  font-size: 10pt !important;
-}
-
-.agent-tree-nested {
-  margin-left: 0.75rem;
-  padding-left: 0.5rem;
-  border-left: 1px solid var(--bs-border-color);
-}
-
-/* 관리 콘솔 — 통일된 그리드/테이블 래퍼 (라운드·슬레이트 보더·스티키 헤더) */
-.admin-console-grid {
-  border-radius: 0.75rem;
-  border: 1px solid rgb(226 232 240);
-  background: #fff;
-  box-shadow: 0 1px 3px rgb(15 23 42 / 0.06);
-  overflow: hidden;
-}
-.admin-console-grid .table-responsive {
-  overflow: auto;
-  max-height: min(72vh, 900px);
-}
-.admin-console-grid--agent-tree .table-responsive {
-  max-height: min(72vh, 880px);
-}
-.admin-console-grid thead.table-light,
-.admin-console-grid thead {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-}
-.admin-console-grid thead th {
-  background-color: rgb(248 250 252) !important;
-  border-bottom: 1px solid rgb(226 232 240) !important;
-  box-shadow: 0 1px 0 rgb(226 232 240);
-}
-
-/* react-datepicker — 관리 콘솔 sticky 헤더 위에 표시 */
-.admin-datetime-filter .react-datepicker-wrapper {
-  width: 100%;
-}
-.admin-datepicker-popper,
-.admin-datetime-filter .react-datepicker-popper {
-  z-index: 1060 !important;
-}
-
-/* 전세계 현황 지도 — 녹색 계열 땅 */
-.world-map-wrap {
-  background: linear-gradient(180deg, #d8efe0 0%, #eaf6ee 45%, #d3e8da 100%);
-  border-radius: 0.75rem;
-  overflow: hidden;
-  min-height: 320px;
-}
-.world-map-inline {
-  overflow: hidden;
-}
-.world-map-inline .world-land-svg,
-.world-map-inline svg.world-land-svg {
-  width: 100%;
-  height: 100%;
-}
-.world-map-inline svg path {
-  fill: #6faf74 !important;
-  stroke: #3f7a45 !important;
-  stroke-width: 0.35px !important;
-}
-.world-map-inline svg path[style*='fill:#ffffff'],
-.world-map-inline svg path[style*='fill:#fff'],
-.world-map-inline svg path[style*='fill: #ffffff'],
-.world-map-inline svg path[style*='fill:white'] {
-  fill: #cfead4 !important;
-  stroke: none !important;
-}
-.world-map-badge {
-  border-radius: 0.5rem !important;
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
-}
-.world-map-badge:hover {
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.14) !important;
-  transform: translateY(-1px);
-  z-index: 3 !important;
-}
-

@@ -1,38 +1,49 @@
-# EMPECS CGMS Admin
+# EMPECS CGMS 관리자 콘솔
 
-[ln_admin_fe_ref](https://github.com/delphism84/ln_admin_fe_ref)를 클론한 **Bootstrap 5 + Tailwind** 셸 위에, **`empecs/cgms/cgms_be`**의 관리자 API(`/api/admin/*`)를 쓰는 콘솔입니다.
+회원·기기(SN/QR)·운영을 관리하는 어드민 FE. 백엔드는 `empecs_cgms_be` 의 `/api/admin`
+(계약: BE 저장소 `docs/admin_api.md`).
 
-- 로그인: `POST /api/admin/login` → JWT는 `localStorage` 키 `empecs_admin_jwt`
-- 화면: `/login`, `/dashboard`, `/users`, `/devices`, `/data`
+- Next.js 14 (App Router, standalone) · TypeScript · Tailwind + daisyUI(라이트/다크) · recharts · qrcode
+- 셸·메뉴·공통 부품 구성은 games_card 통합어드민(admin-ui)을 참고했다.
+
+## 메뉴
+
+| 메뉴 | 경로 | 내용 |
+|---|---|---|
+| 대시보드 | `/dashboard`, `/dashboard/world` | 센서·회원·동기화 요약, 추이 차트, 실시간 기기, 국가별 현황 |
+| 회원 관리 | `/users`, `/users/[id]` | 검색·정렬·내보내기, 상세(센서·혈당 그래프·이벤트·알람·로그인 이력), 정지·강제 로그아웃·탈퇴·삭제 |
+| 기기 관리 | `/devices`, `/devices/[serial]` | SN 재고, 상태(재고·출고·사용 중·만료·차단), 소유권 해제·이전, 시작시각 정정, 이력 |
+| | `/devices/register` | 단건 등록 · SN 범위 생성 · CSV 가져오기 |
+| | `/devices/lots`, `/devices/qr`, `/devices/ending` | 로트, QR 라벨 인쇄, 종료 예정(실시간) |
+| 동기화 감시 | `/monitor` | 센서 사용 중인데 업로드가 끊긴 회원 |
+| 데이터 관리 | `/data` | 혈당 조회·내보내기·삭제 |
+| 공지사항 | `/notices` | 앱에 노출되는 공지 |
+| 시스템 | `/system/admins`, `/system/audit`, `/system/logins`, `/system/settings` | 관리자 계정·역할, 감사 로그, 로그인 이력, 설정 |
+
+메뉴와 버튼은 로그인한 관리자의 권한에 따라 숨겨진다(실제 차단은 서버가 한다).
+
+## 구조
+
+```
+src/lib/           api.ts(401 처리·오류 문구) auth.tsx(권한) useList.ts dialog.ts toast.ts format.ts
+src/components/ui  adm.tsx(PageTitle·Kpi·Panel·Pill) DataTable Modal DialogHost
+src/components/layout  navConfig.ts(메뉴 정의) AdminShell.tsx
+src/app/(main)/    화면
+```
 
 ## 개발
 
 ```bash
-npm install
-npm run dev
+# BE: 메모리 DB + 시드 데이터 (empecs_cgms_be 저장소에서)
+npm run dev:memory            # http://127.0.0.1:58113, 로컬 관리자 계정은 기동 로그에 출력
+
+# FE
+echo "API_PROXY_TARGET=http://127.0.0.1:58113" > .env.local
+npm install && npm run dev
 ```
 
-API는 `src/lib/adminApi.ts`의 `apiUrl()` / `adminFetch()`를 통해 나갑니다.
+`npm run typecheck` · `npm run build`
 
-| 방식 | 설정 | 설명 |
-|------|------|------|
-| **Next 프록시 (권장)** | `NEXT_PUBLIC_API_BASE_URL` 비움 + `API_PROXY_TARGET=http://127.0.0.1:63101` | 브라우저는 `http://localhost:3000/api/...`, Next가 `next.config.mjs` rewrites로 로컬 BE로 전달. CORS 없음. |
-| **클라이언트 직결** | `NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:63101` | 브라우저가 BE로 직접 요청(BE `cors()` 허용 전제). |
+## 배포
 
-로컬 BE는 `empecs/cgms/cgms_be`에서 `docker compose up` 시 호스트 **`127.0.0.1:63101`**(컨테이너 `be:58002` 매핑)을 쓰는 구성이 일반적입니다.
-
-프록시로 띄우는 예:
-
-```bash
-API_PROXY_TARGET=http://127.0.0.1:63101 npm run dev
-```
-
-자세한 변수 설명은 `.env.example` 참고.
-
-## Docker / Compose
-
-`empecs/cgms/cgms_be/docker-compose.yml`의 `fe` 서비스가 이 디렉터리를 빌드합니다. Compose에서는 빌드 인자 `API_PROXY_TARGET=http://be:58002`로 `/api`를 백엔드로 넘깁니다.
-
-## 원본 레퍼런스
-
-- <https://github.com/delphism84/ln_admin_fe_ref>
+BE 저장소의 `docker-compose.yml` 이 이 저장소를 `../cgms_admin_fe` 로 빌드한다(`API_PROXY_TARGET=http://be:58002`).

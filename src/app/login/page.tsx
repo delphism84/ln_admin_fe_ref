@@ -1,86 +1,71 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import type { FormEvent } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { api, errorMessage, getToken, setToken } from '@/lib/api';
+import { ErrorBox } from '@/components/ui/adm';
 
-import { ADMIN_TOKEN_KEY, apiUrl } from '@/lib/adminApi'
+function LoginForm() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
-export default function LoginPage() {
-  const router = useRouter()
-  const [username, setUsername] = useState('admin')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [errorText, setErrorText] = useState('')
+  useEffect(() => {
+    if (getToken()) router.replace('/dashboard');
+  }, [router]);
 
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    setErrorText('')
-    setLoading(true)
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setError('');
     try {
-      const res = await fetch(apiUrl('/api/admin/login'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) {
-        setErrorText(res.status === 401 ? '아이디 또는 비밀번호가 올바르지 않습니다.' : `로그인 실패 (HTTP ${res.status})`)
-        return
-      }
-      const token = typeof data?.token === 'string' ? data.token : ''
-      if (!token) {
-        setErrorText('서버 응답에 토큰이 없습니다.')
-        return
-      }
-      localStorage.setItem(ADMIN_TOKEN_KEY, token)
-      router.push('/dashboard')
-    } catch {
-      setErrorText('네트워크 오류입니다.')
-    } finally {
-      setLoading(false)
+      const r = await api<{ token: string; admin: { mustChangePassword: boolean } }>('/login', { body: { username: username.trim(), password } });
+      setToken(r.token);
+      router.replace(r.admin.mustChangePassword ? '/account?force=1' : '/dashboard');
+    } catch (err) {
+      setError(errorMessage(err));
+      setBusy(false);
     }
   }
 
   return (
-    <div className='min-vh-100 d-flex align-items-center justify-content-center p-4'>
-      <div className='card shadow-sm border-0' style={{ maxWidth: 420, width: '100%' }}>
-        <div className='card-body p-4 p-md-5'>
-          <h1 className='h4 fw-semibold mb-1'>EMPECS CGMS Admin</h1>
-          <p className='text-secondary small mb-4'>관리자 계정으로 로그인하세요.</p>
-          <form onSubmit={onSubmit}>
-            <div className='mb-3'>
-              <label className='form-label'>아이디</label>
-              <input
-                className='form-control'
-                autoComplete='username'
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                required
-              />
-            </div>
-            <div className='mb-3'>
-              <label className='form-label'>비밀번호</label>
-              <input
-                type='password'
-                className='form-control'
-                autoComplete='current-password'
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            {errorText ? (
-              <div className='alert alert-danger py-2 small' role='alert'>
-                {errorText}
-              </div>
-            ) : null}
-            <button type='submit' className='btn btn-primary w-100' disabled={loading}>
-              {loading ? '로그인 중…' : '로그인'}
-            </button>
-          </form>
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <form onSubmit={submit} className="adm-card w-full max-w-[380px] p-7">
+        <div className="flex items-center gap-2.5 mb-6">
+          <span className="w-9 h-9 rounded-xl bg-primary text-primary-content flex items-center justify-center font-black">CG</span>
+          <div>
+            <div className="text-[17px] font-extrabold leading-tight">EMPECS CGMS</div>
+            <div className="text-[12px] text-base-content/60">관리자 콘솔</div>
+          </div>
         </div>
-      </div>
+        {params.get('expired') && !error && (
+          <div className="mb-3 px-3 py-2 rounded-lg bg-warning/15 text-warning text-[13px] font-medium">로그인이 만료되었습니다. 다시 로그인해 주세요.</div>
+        )}
+        <ErrorBox message={error} />
+        <label className="block mb-3">
+          <span className="adm-label">아이디</span>
+          <input className="adm-input" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" autoFocus required />
+        </label>
+        <label className="block mb-5">
+          <span className="adm-label">비밀번호</span>
+          <input className="adm-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
+        </label>
+        <button type="submit" className="adm-btn adm-btn-primary w-full !h-10" disabled={busy}>
+          {busy ? '확인 중…' : '로그인'}
+        </button>
+      </form>
     </div>
-  )
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
 }
