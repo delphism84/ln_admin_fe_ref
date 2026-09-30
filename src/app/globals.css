@@ -96,3 +96,41 @@ body {
 .admin-datetime-filter .react-datepicker-popper {
   z-index: 1060 !important;
 }
+
+/* 전세계 현황 지도 — 녹색 계열 땅 */
+.world-map-wrap {
+  background: linear-gradient(180deg, #d8efe0 0%, #eaf6ee 45%, #d3e8da 100%);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  min-height: 320px;
+}
+.world-map-inline {
+  overflow: hidden;
+}
+.world-map-inline .world-land-svg,
+.world-map-inline svg.world-land-svg {
+  width: 100%;
+  height: 100%;
+}
+.world-map-inline svg path {
+  fill: #6faf74 !important;
+  stroke: #3f7a45 !important;
+  stroke-width: 0.35px !important;
+}
+.world-map-inline svg path[style*='fill:#ffffff'],
+.world-map-inline svg path[style*='fill:#fff'],
+.world-map-inline svg path[style*='fill: #ffffff'],
+.world-map-inline svg path[style*='fill:white'] {
+  fill: #cfead4 !important;
+  stroke: none !important;
+}
+.world-map-badge {
+  border-radius: 0.5rem !important;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.world-map-badge:hover {
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.14) !important;
+  transform: translateY(-1px);
+  z-index: 3 !important;
+}
+

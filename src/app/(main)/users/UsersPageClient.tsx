@@ -1,18 +1,18 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 import AdminFilterToolbar, { type AdminFilterValues } from '@/components/AdminFilterToolbar'
+import UserEditModal from '@/components/UserEditModal'
 import { adminFetch } from '@/lib/adminApi'
 
 type Row = {
   id: string
-  serial: string
-  bleMac: string
-  userEmail: string
-  userLabel: string
+  email: string
+  name: string
+  provider: string
   createdAt: string
-  updatedAt: string
 }
 
 const emptyFilter: AdminFilterValues = { user: '', sn: '', mac: '', from: '', to: '' }
@@ -29,7 +29,9 @@ function buildQuery(f: AdminFilterValues, page: number, limit: number) {
   return p.toString()
 }
 
-export default function DevicesPage() {
+export default function UsersPageClient() {
+  const searchParams = useSearchParams()
+  const bootstrapped = useRef(false)
   const [filter, setFilter] = useState<AdminFilterValues>(emptyFilter)
   const [applied, setApplied] = useState<AdminFilterValues>(emptyFilter)
   const [rows, setRows] = useState<Row[]>([])
@@ -38,6 +40,8 @@ export default function DevicesPage() {
   const [limit] = useState(25)
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
+  const [modalUserId, setModalUserId] = useState<string | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
 
   const load = useCallback(
     async (p: number, f: AdminFilterValues) => {
@@ -45,7 +49,7 @@ export default function DevicesPage() {
       setLoading(true)
       try {
         const qs = buildQuery(f, p + 1, limit)
-        const res = await adminFetch(`/api/admin/devices?${qs}`)
+        const res = await adminFetch(`/api/admin/users?${qs}`)
         if (res.status === 401) {
           setErr('인증 만료')
           return
@@ -67,15 +71,45 @@ export default function DevicesPage() {
     [limit]
   )
 
+  useEffect(() => {
+    if (bootstrapped.current) return
+    bootstrapped.current = true
+    const userQ = (searchParams.get('user') || '').trim()
+    const snQ = (searchParams.get('sn') || '').trim()
+    const macQ = (searchParams.get('mac') || '').trim()
+    if (!userQ && !snQ && !macQ) return
+    const next: AdminFilterValues = {
+      ...emptyFilter,
+      user: userQ,
+      sn: snQ,
+      mac: macQ
+    }
+    setFilter(next)
+    setApplied(next)
+    setPage(0)
+    void load(0, next)
+  }, [searchParams, load])
+
   const onSearch = () => {
     setApplied(filter)
     setPage(0)
     load(0, filter)
   }
 
+  const openEdit = (id: string) => {
+    setModalUserId(id)
+    setModalOpen(true)
+  }
+
+  const closeModal = () => {
+    setModalOpen(false)
+    setModalUserId(null)
+  }
+
   return (
     <div>
-      <h1 className='h4 fw-semibold mb-4'>전체 기기</h1>
+      <h1 className='h4 fw-semibold mb-4'>사용자 관리</h1>
+      <p className='small text-secondary mb-3'>행을 클릭하면 상세 편집·비밀번호 변경(관리자) 모달이 열립니다.</p>
       <AdminFilterToolbar value={filter} onChange={setFilter} onSearch={onSearch} loading={loading} />
       {err ? (
         <div className='alert alert-danger py-2' role='alert'>
@@ -87,30 +121,40 @@ export default function DevicesPage() {
           <table className='table table-hover table-sm mb-0'>
             <thead className='table-light'>
               <tr>
-                <th>S/N</th>
-                <th>MAC</th>
-                <th>사용자</th>
                 <th>이메일</th>
-                <th>등록일</th>
-                <th>수정일</th>
+                <th>이름</th>
+                <th>제공자</th>
+                <th>가입일</th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className='text-secondary text-center py-4'>
-                    조건에 맞는 기기가 없거나 조회를 실행하세요.
+                  <td colSpan={4} className='text-secondary text-center py-4'>
+                    조건에 맞는 사용자가 없거나 조회를 실행하세요.
                   </td>
                 </tr>
               ) : (
-                rows.map(r => (
-                  <tr key={r.id}>
-                    <td className='text-nowrap'>{r.serial}</td>
-                    <td className='text-nowrap font-monospace small'>{r.bleMac}</td>
-                    <td>{r.userLabel}</td>
-                    <td>{r.userEmail}</td>
-                    <td className='text-nowrap small'>{r.createdAt ? new Date(r.createdAt).toLocaleString('ko-KR') : '—'}</td>
-                    <td className='text-nowrap small'>{r.updatedAt ? new Date(r.updatedAt).toLocaleString('ko-KR') : '—'}</td>
+                rows.map((r) => (
+                  <tr
+                    key={r.id}
+                    role='button'
+                    tabIndex={0}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => openEdit(r.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        openEdit(r.id)
+                      }
+                    }}
+                  >
+                    <td>{r.email}</td>
+                    <td>{r.name}</td>
+                    <td>
+                      <span className='badge bg-secondary'>{r.provider}</span>
+                    </td>
+                    <td className='text-nowrap'>{r.createdAt ? new Date(r.createdAt).toLocaleString('ko-KR') : '—'}</td>
                   </tr>
                 ))
               )}
@@ -136,6 +180,15 @@ export default function DevicesPage() {
           </button>
         </div>
       </div>
+
+      <UserEditModal
+        userId={modalUserId}
+        open={modalOpen}
+        onClose={closeModal}
+        onSaved={() => {
+          void load(page, applied)
+        }}
+      />
     </div>
   )
 }

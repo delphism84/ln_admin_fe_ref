@@ -2,19 +2,63 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, Cpu, Database, LogOut } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { LayoutDashboard, Users, Cpu, Database, Settings, LogOut, ChevronDown } from 'lucide-react'
 
 import { ADMIN_TOKEN_KEY } from '@/lib/adminApi'
 
-const nav = [
-  { href: '/dashboard', label: '대시보드', icon: LayoutDashboard },
+type NavLeaf = { href: string; label: string }
+type NavGroup = { key: string; label: string; icon: typeof LayoutDashboard; children: NavLeaf[] }
+type NavLeafTop = { href: string; label: string; icon: typeof LayoutDashboard }
+type NavItem = NavGroup | NavLeafTop
+
+const nav: NavItem[] = [
+  {
+    key: 'dashboard',
+    label: '대시보드',
+    icon: LayoutDashboard,
+    children: [
+      { href: '/dashboard', label: '전체 현황' },
+      { href: '/dashboard/world', label: '전세계 현황' }
+    ]
+  },
   { href: '/users', label: '사용자 관리', icon: Users },
-  { href: '/devices', label: '기기 관리', icon: Cpu },
-  { href: '/data', label: '데이터 관리', icon: Database }
+  {
+    key: 'devices',
+    label: '기기 관리',
+    icon: Cpu,
+    children: [
+      { href: '/devices', label: '전체 기기' },
+      { href: '/devices/ending', label: '종료 예정 기기' }
+    ]
+  },
+  { href: '/data', label: '데이터 관리', icon: Database },
+  { href: '/settings', label: '설정', icon: Settings }
 ]
+
+function isActivePath(pathname: string | null, href: string) {
+  if (!pathname) return false
+  if (href === '/dashboard') return pathname === '/dashboard'
+  if (href === '/devices') return pathname === '/devices'
+  return pathname === href || pathname.startsWith(`${href}/`)
+}
+
+function isGroup(item: NavItem): item is NavGroup {
+  return 'children' in item && Array.isArray(item.children)
+}
 
 export default function CgmsShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const defaultOpen = useMemo(() => {
+    const o: Record<string, boolean> = {}
+    for (const item of nav) {
+      if (isGroup(item)) {
+        o[item.key] = item.children.some((c) => isActivePath(pathname, c.href))
+      }
+    }
+    return o
+  }, [pathname])
+  const [openMap, setOpenMap] = useState<Record<string, boolean>>(defaultOpen)
 
   const logout = () => {
     if (typeof window !== 'undefined') localStorage.removeItem(ADMIN_TOKEN_KEY)
@@ -31,18 +75,58 @@ export default function CgmsShell({ children }: { children: React.ReactNode }) {
           <div className='small text-secondary'>Admin</div>
         </div>
         <nav className='nav flex-column p-2 gap-1 flex-grow-1'>
-          {nav.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href))
+          {nav.map((item) => {
+            const Icon = item.icon
+            if (isGroup(item)) {
+              const groupActive = item.children.some((c) => isActivePath(pathname, c.href))
+              const open = openMap[item.key] ?? groupActive
+              return (
+                <div key={item.key} className='d-flex flex-column gap-1'>
+                  <button
+                    type='button'
+                    className={`nav-link d-flex align-items-center gap-2 rounded py-2 px-3 border-0 text-start w-100 ${
+                      groupActive ? 'bg-primary text-white' : 'text-dark bg-transparent'
+                    }`}
+                    onClick={() => setOpenMap((m) => ({ ...m, [item.key]: !open }))}
+                    aria-expanded={open}
+                  >
+                    <Icon size={18} />
+                    <span className='flex-grow-1'>{item.label}</span>
+                    <ChevronDown size={16} style={{ transform: open ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform .15s' }} />
+                  </button>
+                  {open ? (
+                    <div className='d-flex flex-column gap-1 ps-2'>
+                      {item.children.map((child) => {
+                        const active = isActivePath(pathname, child.href)
+                        return (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            className={`nav-link rounded py-1 px-3 ms-3 small ${
+                              active ? 'bg-primary-subtle text-primary fw-semibold' : 'text-secondary'
+                            }`}
+                          >
+                            {child.label}
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+              )
+            }
+
+            const active = isActivePath(pathname, item.href)
             return (
               <Link
-                key={href}
-                href={href}
+                key={item.href}
+                href={item.href}
                 className={`nav-link d-flex align-items-center gap-2 rounded py-2 px-3 ${
                   active ? 'bg-primary text-white' : 'text-dark'
                 }`}
               >
                 <Icon size={18} />
-                {label}
+                {item.label}
               </Link>
             )
           })}
